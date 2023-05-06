@@ -5,38 +5,47 @@ const path = require('path');
 const sourcePath = path.join(__dirname, 'files');
 const copyToPath = path.join(__dirname, 'files-copy');
 
-fsPromises.mkdir(copyToPath, { recursive: true })
-  .then(() => {
+clearFolder(copyToPath)
+  .then(()=>{
     console.log('===== Start copy files! =====');
-    fsPromises.readdir(copyToPath, { withFileTypes: true })
-      .then((files)=> {
-        for (let index = 0; index < files.length; index++) {
-          const element = files[index];
-          const filePath = path.join(copyToPath, `${element.name}`);
-          fs.unlink(filePath, err => {
-            if (err) console.log(err);
-          });
-        }
-      })
-      .then(
-        fsPromises.readdir(sourcePath, { withFileTypes: true })
-          .then((files) => {
-            for (let index = 0; index < files.length; index++) {
-              const element = files[index];
-              const filePath = path.join(sourcePath, `${element.name}`);
-              const copyPath = path.join(copyToPath, `${element.name}`);
-              console.log('*');
-              fsPromises.copyFile(filePath, copyPath)
-                .then(result => {
-                  if (result !== undefined) console.log (`can't copy file path ${filePath}`);
-                })
-                .catch(err => {
-                  console.log(err);
-                });
-            }
-            console.log('= Copy files has finished! =');
-          })
-      );
+    copyFiles(sourcePath, copyToPath);
   })
-  .catch(err => console.log(err));
-  
+  .then(()=>{
+    console.log('= Copy files has finished! =');   
+  });
+
+
+function copyFiles(sourcePath, copyToPath) {
+  fsPromises.mkdir(copyToPath, { recursive: true })
+    .then(() => {
+      fsPromises.readdir(sourcePath, { withFileTypes: true })
+        .then((files) => {
+          for (let index = 0; index < files.length; index++) {
+            const element = files[index];
+            const filePath = path.join(sourcePath, `${element.name}`);
+            const copyPath = path.join(copyToPath, `${element.name}`);
+            fs.stat(filePath, (err, stats) => {
+              if (stats.isFile()) {
+                fsPromises.copyFile(filePath, copyPath)
+                  .then(result => {
+                    if (result !== undefined) console.log(`can't copy file path ${filePath}`);
+                  })
+                  .catch(err => {
+                    console.log(err);
+                  });
+              } else if (stats.isDirectory()) {
+                copyFiles(filePath, copyPath);
+              }
+              if (err) console.log(err);
+            });
+          }
+        });
+    })
+    .catch(err => console.log(err));
+}
+
+
+
+function clearFolder(folderPath){
+  return fsPromises.rm(folderPath, { recursive: true, force: true });
+}

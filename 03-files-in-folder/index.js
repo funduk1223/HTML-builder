@@ -18,5 +18,3 @@ fsPromises.readdir(secretDirPath, { withFileTypes: true })
       });
     }
   });
-
-
