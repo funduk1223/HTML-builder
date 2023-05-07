@@ -83,30 +83,27 @@ function generateStyle(dirPath, styleFile) {
   let res = [];
   fsPromises.readdir(dirPath, { withFileTypes: true })
     .then((files) => {
-      files.forEach((element) =>{
+      files.forEach((element) => {
         const filePath = path.join(dirPath, `${element.name}`);
         let p = getDataFromFile(filePath);
-        fs.stat(filePath, (err, stats) => {
-          const fileInfo = path.parse(filePath);
-          if (stats.isFile() && fileInfo.ext === '.css') {
-            p.then((data) => {
-              res.push(data);
-            });
-          }
-          if (err) console.log(err);
-        });
+        const fileInfo = path.parse(filePath);
+        if (element.isFile() && fileInfo.ext === '.css') {
+          p.then((data) => {
+            res.push(data);
+          });
+        }
         output.push(p);
       });
       return Promise.all(output);
     })
-    .then(()=>{
-      res.forEach(element =>{
-        styleFile.write(`${element}\n`); 
+    .then(() => {
+      res.forEach(element => {
+        styleFile.write(`${element}\n`);
       })
     })
 }
 
-function generateHtml(tamplatePath, html) {
+function generateHtml(tamplatePath, htmlFile) {
   let res = [];
   let output = [];
   let reg = new RegExp(/({{([a-z])+}})/);
@@ -133,7 +130,7 @@ function generateHtml(tamplatePath, html) {
     })
     .then(() => {
       res.forEach((element) => {
-        html.write(`${element}\r\n`);
+        htmlFile.write(`${element}\r\n`);
       });
     });
 }
