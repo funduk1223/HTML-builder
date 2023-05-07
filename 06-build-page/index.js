@@ -79,23 +79,31 @@ function copyFiles(sourcePath, copyToPath) {
 }
 
 function generateStyle(dirPath, styleFile) {
+  let output = [];
+  let res = [];
   fsPromises.readdir(dirPath, { withFileTypes: true })
     .then((files) => {
-      for (let index = 0; index < files.length; index++) {
-        const element = files[index];
+      files.forEach((element) =>{
         const filePath = path.join(dirPath, `${element.name}`);
+        let p = getDataFromFile(filePath);
         fs.stat(filePath, (err, stats) => {
           const fileInfo = path.parse(filePath);
           if (stats.isFile() && fileInfo.ext === '.css') {
-            fsPromises.readFile(filePath, { encoding: 'utf-8' })
-              .then((data) => {
-                if (data !== null) { styleFile.write(`${data}\n`); }
-              });
+            p.then((data) => {
+              res.push(data);
+            });
           }
           if (err) console.log(err);
         });
-      }
-    });
+        output.push(p);
+      });
+      return Promise.all(output);
+    })
+    .then(()=>{
+      res.forEach(element =>{
+        styleFile.write(`${element}\n`); 
+      })
+    })
 }
 
 function generateHtml(tamplatePath, html) {
@@ -114,7 +122,7 @@ function generateHtml(tamplatePath, html) {
         if (reg.test(element)) {
           const fileTamplateName = `${element.match(/([a-z])+/ig)}.html`;
           const fileTamplatePath = path.join(componentsDirPath, fileTamplateName);
-          let p = getHtmlCode(fileTamplatePath);
+          let p = getDataFromFile(fileTamplatePath);
           p.then((data) => {
             res.splice(index, 1, data);
           });
@@ -130,6 +138,6 @@ function generateHtml(tamplatePath, html) {
     });
 }
 
-function getHtmlCode(path) {
+function getDataFromFile(path) {
   return fsPromises.readFile(path, { encoding: 'utf-8' });
 }

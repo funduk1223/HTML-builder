@@ -9,12 +9,16 @@ fsPromises.readdir(secretDirPath, { withFileTypes: true })
     for (let index = 0; index < files.length; index++) {
       const element = files[index];
       const filePath = path.join(secretDirPath, `${element.name}`);
-      fs.stat(filePath, (err, stats) => {
-        const fileInfo = path.parse(filePath);
-        if (stats.isFile()) {
-          console.log(`${fileInfo.name} - ${(fileInfo.ext).slice(1, fileInfo.ext.length)} - ${(stats['size']/1024).toFixed(3)}kb`);
-        }
-        if(err) console.log(err);
-      });
+      const fileInfo = path.parse(filePath);
+      if (element.isFile()) {
+        outputFileData(filePath, fileInfo);
+      }
     }
   });
+
+function outputFileData(path, file){
+  fs.stat(path, (err, data) =>{
+    if(err) console.log(err);
+    console.log(`${file.name} - ${(file.ext).slice(1, file.ext.length)} - ${(data['size']/1024).toFixed(2)}kb`);
+  })
+}
