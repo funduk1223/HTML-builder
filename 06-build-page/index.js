@@ -24,19 +24,16 @@ clearFolder(projectDistPath)
 function builder() {
   fsPromises.mkdir(projectDistPath, { recursive: true })
     .then(() => {
-      // Copy assets folder
       copyFiles(assetSourcePath, assetDistPath);
       console.log('Copy Assets folder to Project-Dist');
     })
     .then(() => {
-      // Create general style -> style.css
       let style = fs.createWriteStream(stylePath, { flags: 'w', encoding: 'utf-8' });
       generateStyle(styleDirPath, style);
       console.log('Generate StyleSheet');
 
     })
     .then(() => {
-      // Create general html -> index.html
       let html = fs.createWriteStream(htmlPath, { flags: 'w', encoding: 'utf-8' });
       generateHtml(htmlTamplatePath, html);
       console.log('Generate HTML');
@@ -105,14 +102,28 @@ function generateStyle(dirPath, styleFile) {
 
 function generateHtml(tamplatePath, htmlFile) {
   let res = [];
+  let promises = [];
   let output = [];
   let reg = new RegExp(/({{([a-z])+}})/);
   fsPromises.readFile(tamplatePath, { encoding: 'utf-8' })
     .then(data => {
       if (data !== null) {
-        res = data.split('\r\n');
+        res = data.split(`\n`);
       }
       return res;
+    })
+    .then((arr)=>{
+      arr.forEach((element) => {
+        if (reg.test(element)) {
+          let o = element.match(/([a-z])+/ig);
+          o.forEach((el)=>{
+            output.push(`{{${el}}}`);
+          });
+        } else {
+          output.push(element);
+        }
+      });
+      return output;
     })
     .then((arr) => {
       arr.forEach((element, index) => {
@@ -121,16 +132,16 @@ function generateHtml(tamplatePath, htmlFile) {
           const fileTamplatePath = path.join(componentsDirPath, fileTamplateName);
           let p = getDataFromFile(fileTamplatePath);
           p.then((data) => {
-            res.splice(index, 1, data);
+            arr.splice(index++, 1, data);
           });
-          output.push(p);
+          promises.push(p);
         }
       });
-      return Promise.all(output);
+      return Promise.all(promises);
     })
     .then(() => {
-      res.forEach((element) => {
-        htmlFile.write(`${element}\r\n`);
+      output.forEach((element) => {
+        htmlFile.write(`${element}\n`);
       });
     });
 }
